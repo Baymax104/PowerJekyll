@@ -3,7 +3,7 @@ from enum import StrEnum
 from pathlib import Path
 from typing import Annotated, Any
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class ItemType(StrEnum):
@@ -12,6 +12,8 @@ class ItemType(StrEnum):
 
 
 class Formatter(BaseModel):
+    model_config = ConfigDict(extra="allow")
+
     layout: Annotated[str, Field(frozen=True)] = "post"
     title: str = ""
     categories: list[str] = []

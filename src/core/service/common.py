@@ -1,11 +1,11 @@
 # -*- coding: UTF-8 -*-
 from pathlib import Path
 
-from blog.models import Item
-from blog.service.base import ServiceOperation
-from blog.service.directory_service import DirectoryService
-from blog.service.file_service import FileService
+from core.models import Item
 from settings import Mode
+from .base import ServiceOperation
+from .directory_service import DirectoryService
+from .file_service import FileService
 
 
 class BlogService(ServiceOperation):

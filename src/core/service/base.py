@@ -4,7 +4,7 @@ from pathlib import Path
 
 from pydantic import BaseModel
 
-from blog.models import Item
+from core.models import Item
 
 
 class ServiceOperation(ABC):

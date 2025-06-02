@@ -6,9 +6,9 @@ import time
 
 from ruamel.yaml import YAML
 
-from blog.models import Item, ItemType
-from blog.service.base import BaseService
-from blog.utils import assert_item_exists
+from core.models import Item, ItemType
+from core.utils import assert_item_exists
+from .base import BaseService
 
 
 class DirectoryService(BaseService):
@@ -29,10 +29,10 @@ class DirectoryService(BaseService):
 
         item_path.mkdir(exist_ok=True)
         assets_path.mkdir(exist_ok=True)
-        with open(item.md_path, "w", encoding="utf-8") as f:
-            f.write("---\n")
-            YAML().dump(item.formatter.model_dump(), f)
-            f.write("---\n")
+
+        yaml = YAML(typ="string")
+        content = f"---\n{yaml.dump_to_string(item.formatter.model_dump())}\n---\n"
+        item.md_path.write_text(content, encoding="utf-8")
 
 
     def open(self, item: Item, editor: str | None = None):
@@ -77,10 +77,9 @@ class DirectoryService(BaseService):
 
         item.formatter.date = time.strftime("%Y-%m-%d %H:%M")
 
-        with open(dest_md_path, "w", encoding="utf-8") as f:
-            f.write("---\n")
-            YAML().dump(item.formatter.model_dump(), f)
-            f.write("---\n")
+        yaml = YAML(typ="string")
+        content = f"---\n{yaml.dump_to_string(item.formatter.model_dump())}\n---\n{item.article}\n"
+        dest_md_path.write_text(content, encoding="utf-8")
 
 
     def unpublish(self, item: Item):
@@ -95,7 +94,6 @@ class DirectoryService(BaseService):
 
         item.formatter.date = None
 
-        with open(dest_md_path, "w", encoding="utf-8") as f:
-            f.write("---\n")
-            YAML().dump(item.formatter.model_dump(), f)
-            f.write("---\n")
+        yaml = YAML(typ="string")
+        content = f"---\n{yaml.dump_to_string(item.formatter.model_dump())}\n---\n{item.article}\n"
+        dest_md_path.write_text(content, encoding="utf-8")
