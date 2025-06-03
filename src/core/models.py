@@ -1,9 +1,9 @@
 # -*- coding: UTF-8 -*-
 from enum import StrEnum
 from pathlib import Path
-from typing import Annotated, Any
+from typing import Annotated
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
 class ItemType(StrEnum):
@@ -18,16 +18,13 @@ class Formatter(BaseModel):
     title: str = ""
     categories: list[str] = []
     tags: list[str] = []
-    date: str | None = None
 
 
 class Item(BaseModel):
     name: str
     type: ItemType
-    path: Path | None = None
-    md_path: Path | None = None
-    formatter: Formatter = Formatter()
-    article: str = ""
+    path: Annotated[Path | None, Field(description="item relative path")] = None
+    md_path: Annotated[Path | None, Field(description="markdown relative path")] = None
 
 
     @property
@@ -36,12 +33,31 @@ class Item(BaseModel):
 
 
     @property
-    def info(self) -> dict[str, Any]:
-        infos = {
+    def info(self) -> dict[str, str]:
+        return {
             "name": self.name,
             "type": self.type.name,
             "path": str(self.path),
             "markdown path": str(self.md_path),
         }
-        infos = dict(infos, **self.formatter.model_dump())
-        return infos
+
+
+class BlogItems(BaseModel):
+    posts: list[Item]
+    drafts: list[Item]
+
+
+    @classmethod
+    @field_validator("posts")
+    def __check_posts(cls, posts: list[Item]) -> list[Item]:
+        if not all(item.type == ItemType.Post for item in posts):
+            raise ValueError("posts are not valid")
+        return posts
+
+
+    @classmethod
+    @field_validator("drafts")
+    def __check_drafts(cls, drafts: list[Item]) -> list[Item]:
+        if not all(item.type == ItemType.Draft for item in drafts):
+            raise ValueError("drafts are not valid")
+        return drafts

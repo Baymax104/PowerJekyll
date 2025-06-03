@@ -1,11 +1,10 @@
 # -*- coding: UTF-8 -*-
-import json
 from pathlib import Path
 
+from core.models import BlogItems, Formatter, Item
+from core.service import BlogService
+from core.utils import is_dir_item, is_file_item, load_item
 from settings import Mode
-from .models import Item
-from .service import BlogService
-from .utils import is_dir_item, is_file_item, load_item
 
 
 class Blog:
@@ -18,29 +17,43 @@ class Blog:
 
     def synchronize(self):
         posts = self.__get_items("_posts")
-        posts = [item.model_dump() for item in posts]
         drafts = self.__get_items("_drafts")
-        drafts = [item.model_dump() for item in drafts]
-
-        data = {
-            "posts": posts,
-            "drafts": drafts,
-        }
-
+        blog_items = BlogItems(posts=posts, drafts=drafts)
         index_file = Path.home() / ".jekyll-cli" / "index.json"
-        with open(index_file, "w", encoding="utf-8") as f:
-            json.dump(data, f, indent=4, ensure_ascii=False)
+        content = blog_items.model_dump_json(indent=4)
+        index_file.write_text(content, encoding="utf-8")
 
 
     def __get_items(self, sub_dir: str) -> list[Item]:
         parent_dir = self.root / sub_dir
-        if self.mode == Mode.File:
-            item_paths = [f for f in parent_dir.iterdir() if is_file_item(f)]
-        else:
-            item_paths = [f for f in parent_dir.iterdir() if is_dir_item(f)]
-
-        items = [load_item(f) for f in item_paths]
+        filter_item = is_file_item if self.mode == Mode.File else is_dir_item
+        item_paths = [f for f in parent_dir.iterdir() if filter_item(f)]
+        items = [load_item(f, self.root) for f in item_paths]
         return items
+
+
+    def create(self, item: Item, formatter: Formatter):
+        self.service.create(item, formatter)
+
+
+    def remove(self, item: Item):
+        self.service.remove(item)
+
+
+    def open(self, item: Item, editor: str | None = None):
+        self.service.open(item, editor)
+
+
+    def rename(self, item: Item, new_name: str):
+        self.service.rename(item, new_name)
+
+
+    def publish(self, item: Item):
+        self.service.publish(item)
+
+
+    def unpublish(self, item: Item):
+        self.service.unpublish(item)
 
 
 if __name__ == "__main__":

@@ -4,13 +4,13 @@ from pathlib import Path
 
 from pydantic import BaseModel
 
-from core.models import Item
+from core.models import Formatter, Item
 
 
 class ServiceOperation(ABC):
 
     @abstractmethod
-    def create(self, item: Item):
+    def create(self, item: Item, formatter: Formatter):
         ...
 
 

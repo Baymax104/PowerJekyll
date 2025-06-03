@@ -1,11 +1,11 @@
 # -*- coding: UTF-8 -*-
 from pathlib import Path
 
-from core.models import Item
+from core.models import Formatter, Item
+from core.service.base import ServiceOperation
+from core.service.directory_service import DirectoryService
+from core.service.file_service import FileService
 from settings import Mode
-from .base import ServiceOperation
-from .directory_service import DirectoryService
-from .file_service import FileService
 
 
 class BlogService(ServiceOperation):
@@ -19,8 +19,8 @@ class BlogService(ServiceOperation):
             raise NotImplementedError
 
 
-    def create(self, item: Item):
-        self.delegate.create(item)
+    def create(self, item: Item, formatter: Formatter):
+        self.delegate.create(item, formatter)
 
 
     def open(self, item: Item, editor: str | None = None):

@@ -6,33 +6,33 @@ import time
 
 from ruamel.yaml import YAML
 
-from core.models import Item, ItemType
+from core.models import Formatter, Item, ItemType
+from core.service.base import BaseService
 from core.utils import assert_item_exists
-from .base import BaseService
 
 
 class DirectoryService(BaseService):
 
-    def create(self, item: Item):
+    def create(self, item: Item, formatter: Formatter):
         sub_dir = "_posts" if item.type == ItemType.Post else "_drafts"
-        item_path = self.root / sub_dir / item.name
-        assets_path = item_path / "assets"
+        item_abs_path = self.root / sub_dir / item.name
+        assets_abs_path = item_abs_path / "assets"
         md_filename = f"{item.name}.md"
         if item.type == ItemType.Post:
             md_filename = f"{time.strftime('%Y-%m-%d')}-{md_filename}"
-        md_path = item_path / md_filename
+        md_abs_path = item_abs_path / md_filename
 
         if item.type == ItemType.Post:
-            item.formatter.date = time.strftime("%Y-%m-%d %H:%M")
-        item.path = item_path
-        item.md_path = md_path
+            formatter.date = time.strftime("%Y-%m-%d %H:%M")
+        item.path = item_abs_path.relative_to(self.root)
+        item.md_path = md_abs_path.relative_to(self.root)
 
-        item_path.mkdir(exist_ok=True)
-        assets_path.mkdir(exist_ok=True)
+        item_abs_path.mkdir(exist_ok=True)
+        assets_abs_path.mkdir(exist_ok=True)
 
         yaml = YAML(typ="string")
-        content = f"---\n{yaml.dump_to_string(item.formatter.model_dump())}\n---\n"
-        item.md_path.write_text(content, encoding="utf-8")
+        content = f"---\n{yaml.dump_to_string(formatter.model_dump())}\n---\n"
+        md_abs_path.write_text(content, encoding="utf-8")
 
 
     def open(self, item: Item, editor: str | None = None):
@@ -55,14 +55,14 @@ class DirectoryService(BaseService):
         else:
             new_stem = new_name
 
-        md_path = item.md_path.with_stem(new_stem)
-        item_path = item.path.with_name(new_name)
+        md_abs_path = self.root / item.md_path.with_stem(new_stem)
+        item_abs_path = self.root / item.path.with_name(new_name)
 
-        if item_path.exists():
+        if item_abs_path.exists():
             raise ValueError("Item path already exists.")
 
-        item.md_path.rename(md_path)
-        item.path.rename(item_path)
+        (self.root / item.md_path).rename(md_abs_path)
+        (self.root / item.path).rename(item_abs_path)
 
 
     def publish(self, item: Item):
@@ -70,16 +70,9 @@ class DirectoryService(BaseService):
         if item.type == ItemType.Post:
             raise ValueError("Cannot publish Post")
 
-        dest_parent_dir = self.root / "_posts"
-        dest_path = dest_parent_dir / item.path.relative_to(item.parent)
-        dest_md_path = dest_parent_dir / item.md_path.relative_to(item.parent)
-        shutil.move(item.path, dest_path)
-
-        item.formatter.date = time.strftime("%Y-%m-%d %H:%M")
-
-        yaml = YAML(typ="string")
-        content = f"---\n{yaml.dump_to_string(item.formatter.model_dump())}\n---\n{item.article}\n"
-        dest_md_path.write_text(content, encoding="utf-8")
+        dest_parent_abs_path = self.root / "_posts"
+        dest_item_abs_path = dest_parent_abs_path / item.path.relative_to(item.parent)
+        shutil.move(self.root / item.path, dest_item_abs_path)
 
 
     def unpublish(self, item: Item):
@@ -87,13 +80,6 @@ class DirectoryService(BaseService):
         if item.type == ItemType.Draft:
             raise ValueError("Cannot unpublish Draft")
 
-        dest_parent_dir = self.root / "_drafts"
-        dest_path = dest_parent_dir / item.path.relative_to(item.parent)
-        dest_md_path = dest_parent_dir / item.md_path.relative_to(item.parent)
-        shutil.move(item.path, dest_path)
-
-        item.formatter.date = None
-
-        yaml = YAML(typ="string")
-        content = f"---\n{yaml.dump_to_string(item.formatter.model_dump())}\n---\n{item.article}\n"
-        dest_md_path.write_text(content, encoding="utf-8")
+        dest_parent_abs_path = self.root / "_drafts"
+        dest_item_abs_path = dest_parent_abs_path / item.path.relative_to(item.parent)
+        shutil.move(self.root / item.path, dest_item_abs_path)
