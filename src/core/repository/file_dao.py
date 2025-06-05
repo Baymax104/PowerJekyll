@@ -7,32 +7,27 @@ import time
 from ruamel.yaml import YAML
 
 from core.models import Formatter, Item, ItemType
-from core.service.base import BaseService
+from core.repository.common import BaseDao
 from core.utils import assert_item_exists
 
 
-class DirectoryService(BaseService):
+class FileDao(BaseDao):
 
-    def create(self, item: Item, formatter: Formatter):
-        sub_dir = "_posts" if item.type == ItemType.Post else "_drafts"
-        item_abs_path = self.root / sub_dir / item.name
-        assets_abs_path = item_abs_path / "assets"
+    def add(self, item: Item, formatter: Formatter):
         md_filename = f"{item.name}.md"
         if item.type == ItemType.Post:
             md_filename = f"{time.strftime('%Y-%m-%d')}-{md_filename}"
-        md_abs_path = item_abs_path / md_filename
+        sub_dir = "_posts" if item.type == ItemType.Post else "_drafts"
+        item_abs_path = self.root / sub_dir / md_filename
 
         if item.type == ItemType.Post:
             formatter.date = time.strftime("%Y-%m-%d %H:%M")
         item.path = item_abs_path.relative_to(self.root)
-        item.md_path = md_abs_path.relative_to(self.root)
-
-        item_abs_path.mkdir(exist_ok=True)
-        assets_abs_path.mkdir(exist_ok=True)
+        item.md_path = item_abs_path.relative_to(self.root)
 
         yaml = YAML(typ="string")
         content = f"---\n{yaml.dump_to_string(formatter.model_dump())}\n---\n"
-        md_abs_path.write_text(content, encoding="utf-8")
+        item_abs_path.write_text(content, encoding="utf-8")
 
 
     def open(self, item: Item, editor: str | None = None):
@@ -43,7 +38,7 @@ class DirectoryService(BaseService):
 
     def remove(self, item: Item):
         assert_item_exists(item)
-        shutil.rmtree(item.path)
+        item.path.unlink()
 
 
     def rename(self, item: Item, new_name: str):
@@ -55,14 +50,10 @@ class DirectoryService(BaseService):
         else:
             new_stem = new_name
 
-        md_abs_path = self.root / item.md_path.with_stem(new_stem)
-        item_abs_path = self.root / item.path.with_name(new_name)
-
-        if item_abs_path.exists():
+        md_path = self.root / item.md_path.with_stem(new_stem)
+        if md_path.exists():
             raise ValueError("Item path already exists.")
-
-        (self.root / item.md_path).rename(md_abs_path)
-        (self.root / item.path).rename(item_abs_path)
+        (self.root / item.md_path).rename(md_path)
 
 
     def publish(self, item: Item):

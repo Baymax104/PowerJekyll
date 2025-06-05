@@ -7,15 +7,10 @@ from pydantic import BaseModel
 from core.models import Formatter, Item
 
 
-class ServiceOperation(ABC):
+class DaoOperation(ABC):
 
     @abstractmethod
-    def create(self, item: Item, formatter: Formatter):
-        ...
-
-
-    @abstractmethod
-    def open(self, item: Item, editor: str | None = None):
+    def add(self, item: Item, formatter: Formatter):
         ...
 
 
@@ -39,5 +34,5 @@ class ServiceOperation(ABC):
         ...
 
 
-class BaseService(ServiceOperation, BaseModel, ABC):
+class BaseDao(DaoOperation, BaseModel, ABC):
     root: Path

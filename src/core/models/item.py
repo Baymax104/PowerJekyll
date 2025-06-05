@@ -26,11 +26,9 @@ class Item(BaseModel):
     path: Annotated[Path | None, Field(description="item relative path")] = None
     md_path: Annotated[Path | None, Field(description="markdown relative path")] = None
 
-
     @property
     def parent(self) -> Path | None:
         return self.path.parent if self.path else None
-
 
     @property
     def info(self) -> dict[str, str]:
@@ -46,14 +44,12 @@ class BlogItems(BaseModel):
     posts: list[Item]
     drafts: list[Item]
 
-
     @classmethod
     @field_validator("posts")
     def __check_posts(cls, posts: list[Item]) -> list[Item]:
         if not all(item.type == ItemType.Post for item in posts):
             raise ValueError("posts are not valid")
         return posts
-
 
     @classmethod
     @field_validator("drafts")

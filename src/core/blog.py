@@ -1,9 +1,9 @@
 # -*- coding: UTF-8 -*-
+import subprocess
 from pathlib import Path
 
-from core.models import BlogItems, Formatter, Item
-from core.service import BlogService
-from core.utils import is_dir_item, is_file_item, load_item
+from core.models import Formatter, Item, Result
+from core.repository import BlogRepository
 from settings import Mode
 
 
@@ -12,51 +12,79 @@ class Blog:
     def __init__(self, root: Path, mode: Mode):
         self.root = root
         self.mode = mode
-        self.service = BlogService(root, mode)
+        self.repo = BlogRepository(root, mode)
 
+    def synchronize(self) -> Result[None]:
+        try:
+            self.repo.update_index()
+            return Result.ok()
+        except Exception as e:
+            return Result.fail(e)
 
-    def synchronize(self):
-        posts = self.__get_items("_posts")
-        drafts = self.__get_items("_drafts")
-        blog_items = BlogItems(posts=posts, drafts=drafts)
-        index_file = Path.home() / ".jekyll-cli" / "index.json"
-        content = blog_items.model_dump_json(indent=4)
-        index_file.write_text(content, encoding="utf-8")
+    def create(self, item: Item, formatter: Formatter) -> Result[None]:
+        try:
+            # name must be unique globally
+            items = self.repo.posts + self.repo.drafts
+            exist_item = next((i for i in items if i.name == item.name), None)
+            if exist_item:
+                raise ValueError(f"Item {item.name} already exists")
+            self.repo.add(item, formatter)
+            return Result.ok()
+        except Exception as e:
+            return Result.fail(e)
 
+    def remove(self, name: str) -> Result[None]:
+        try:
+            items = self.repo.posts + self.repo.drafts
+            item = next((i for i in items if i.name == name), None)
+            if item is None:
+                raise ValueError(f"Item {name} not found")
+            self.repo.remove(item)
+            return Result.ok()
+        except Exception as e:
+            return Result.fail(e)
 
-    def __get_items(self, sub_dir: str) -> list[Item]:
-        parent_dir = self.root / sub_dir
-        filter_item = is_file_item if self.mode == Mode.File else is_dir_item
-        item_paths = [f for f in parent_dir.iterdir() if filter_item(f)]
-        items = [load_item(f, self.root) for f in item_paths]
-        return items
+    def open(self, name: str, editor: str | None = None) -> Result[None]:
+        try:
+            items = self.repo.posts + self.repo.drafts
+            item = next((i for i in items if i.name == name), None)
+            if item is None:
+                raise ValueError(f"Item {name} not found")
+            command = ["cmd.exe", "/c", "start", editor if editor else "", item.md_path]
+            subprocess.run(command)
+            return Result.ok()
+        except Exception as e:
+            return Result.fail(e)
 
+    def rename(self, name: str, new_name: str) -> Result[None]:
+        try:
+            items = self.repo.posts + self.repo.drafts
+            item = next((i for i in items if i.name == name), None)
+            if item is None:
+                raise ValueError(f"Item {name} not found")
+            self.repo.rename(item, new_name)
+            return Result.ok()
+        except Exception as e:
+            return Result.fail(e)
 
-    def create(self, item: Item, formatter: Formatter):
-        self.service.create(item, formatter)
+    def publish(self, name: str) -> Result[None]:
+        try:
+            items = self.repo.drafts
+            item = next((i for i in items if i.name == name), None)
+            if item is None:
+                raise ValueError(f"Item {name} not found")
+            self.repo.publish(item)
+            return Result.ok()
+        except Exception as e:
+            return Result.fail(e)
 
-
-    def remove(self, item: Item):
-        self.service.remove(item)
-
-
-    def open(self, item: Item, editor: str | None = None):
-        self.service.open(item, editor)
-
-
-    def rename(self, item: Item, new_name: str):
-        self.service.rename(item, new_name)
-
-
-    def publish(self, item: Item):
-        self.service.publish(item)
-
-
-    def unpublish(self, item: Item):
-        self.service.unpublish(item)
-
-
-if __name__ == "__main__":
-    root = Path("D:/baymax104.github.io")
-    blog = Blog(root, Mode.Directory)
-    blog.synchronize()
+    def unpublish(self, name: str) -> Result[None]:
+        try:
+            items = self.repo.posts
+            item = next((i for i in items if i.name == name), None)
+            if item is None:
+                raise ValueError(f"Item {name} not found")
+            self.repo.unpublish(item)
+            return Result.ok()
+        except Exception as e:
+            return Result.fail(e)

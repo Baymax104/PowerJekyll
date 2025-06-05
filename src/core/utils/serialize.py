@@ -1,4 +1,5 @@
 # -*- coding: UTF-8 -*-
+import re
 from pathlib import Path
 
 from ruamel.yaml import YAML
@@ -35,8 +36,12 @@ def load_item(item_abs_path: Path, root: Path) -> Item:
     else:
         raise ValueError("Unexpected item type")
 
+    name = item_abs_path.stem
+    if item_type == ItemType.Post and (match := re.match(r"^\d{4}-\d{2}-\d{2}-(.+)$", name)):
+        name = match.group(1)
+
     item = Item(
-        name=item_abs_path.stem,
+        name=name,
         type=item_type,
         path=item_abs_path.relative_to(root),
         md_path=md_abs_path.relative_to(root),
