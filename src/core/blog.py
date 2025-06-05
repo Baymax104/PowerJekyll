@@ -1,6 +1,7 @@
 # -*- coding: UTF-8 -*-
 import subprocess
 from pathlib import Path
+from typing import Literal
 
 from core.models import Formatter, Item, Result
 from core.repository import BlogRepository
@@ -44,15 +45,27 @@ class Blog:
         except Exception as e:
             return Result.fail(e)
 
-    def open(self, name: str, editor: str | None = None) -> Result[None]:
+    def open(self, item: Item, editor: str | None = None) -> Result[None]:
         try:
-            items = self.repo.posts + self.repo.drafts
-            item = next((i for i in items if i.name == name), None)
-            if item is None:
-                raise ValueError(f"Item {name} not found")
             command = ["cmd.exe", "/c", "start", editor if editor else "", item.md_path]
             subprocess.run(command)
             return Result.ok()
+        except Exception as e:
+            return Result.fail(e)
+
+    def find(self, name: str, subset: Literal["posts", "drafts", "all"]) -> Result[Item]:
+        try:
+            if subset == "posts":
+                items = self.repo.posts
+            elif subset == "drafts":
+                items = self.repo.drafts
+            else:
+                items = self.repo.posts + self.repo.drafts
+
+            item = next((i for i in items if i.name == name), None)
+            if item is None:
+                raise ValueError(f"Item {name} not found")
+            return Result.ok(item)
         except Exception as e:
             return Result.fail(e)
 

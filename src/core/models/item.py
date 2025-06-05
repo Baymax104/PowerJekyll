@@ -41,8 +41,8 @@ class Item(BaseModel):
 
 
 class BlogItems(BaseModel):
-    posts: list[Item]
-    drafts: list[Item]
+    posts: list[Item] = []
+    drafts: list[Item] = []
 
     @classmethod
     @field_validator("posts")
@@ -57,3 +57,7 @@ class BlogItems(BaseModel):
         if not all(item.type == ItemType.Draft for item in drafts):
             raise ValueError("drafts are not valid")
         return drafts
+
+    @property
+    def articles(self) -> list[Item]:
+        return self.posts + self.drafts

@@ -17,6 +17,6 @@ class GenerateSettings(BaseModel):
 
 class AppSettings(BaseModel):
     root: Path | None = None
-    mode: Mode = Mode.File
+    mode: Mode
     generate: GenerateSettings = GenerateSettings()
     editor: str | None = None

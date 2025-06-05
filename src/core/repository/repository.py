@@ -4,7 +4,7 @@ from pathlib import Path
 from core.models import BlogItems, Formatter, Item
 from core.repository.directory_dao import DirectoryDao
 from core.repository.file_dao import FileDao
-from core.utils import is_dir_item, is_file_item, load_item
+from core.repository.items import get_from_index, get_from_root
 from settings import Mode
 
 
@@ -22,27 +22,10 @@ class BlogRepository:
             raise NotImplementedError
 
     def update_index(self):
-        items = self.__get_from_root()
+        items = get_from_root(self.root, self.mode)
         index_file = Path.home() / ".jekyll-cli" / f"index-{self.mode}.json"
-        content = items.model_dump_json(indent=4)
+        content = items.model_dump_json(indent=2)
         index_file.write_text(content, encoding="utf-8")
-
-    def __get_from_root(self) -> BlogItems:
-        def get_from_sub_dir(sub_dir: str) -> list[Item]:
-            parent_dir = self.root / sub_dir
-            filter_item = is_file_item if self.mode == Mode.File else is_dir_item
-            item_paths = [f for f in parent_dir.iterdir() if filter_item(f)]
-            items = [load_item(f, self.root) for f in item_paths]
-            return items
-
-        posts = get_from_sub_dir("_posts")
-        drafts = get_from_sub_dir("_drafts")
-        return BlogItems(posts=posts, drafts=drafts)
-
-    def __get_from_index(self) -> BlogItems:
-        index_abs_path = Path().home() / ".jekyll-cli" / f"index-{self.mode}.json"
-        content = index_abs_path.read_text(encoding="utf-8")
-        return BlogItems.model_validate_json(content)
 
     def __get_items(self) -> BlogItems | None:
         try:
@@ -50,7 +33,7 @@ class BlogRepository:
                 index_file = Path().home() / ".jekyll-cli" / f"index-{self.mode}.json"
                 if not index_file.is_file():
                     self.update_index()
-                self.__items = self.__get_from_index()
+                self.__items = get_from_index(self.mode)
             return self.__items
         except Exception:
             return None
