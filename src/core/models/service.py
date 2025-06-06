@@ -30,3 +30,6 @@ class Result(BaseModel, Generic[T]):
         if not self.success:
             raise self.error
         return self.data
+
+    def __str__(self):
+        return str(self.data) if self.success else str(self.error)

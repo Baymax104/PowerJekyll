@@ -15,6 +15,14 @@ class Blog:
         self.mode = mode
         self.repo = BlogRepository(root, mode)
 
+    @property
+    def posts(self) -> list[Item]:
+        return self.repo.posts
+
+    @property
+    def drafts(self) -> list[Item]:
+        return self.repo.drafts
+
     def synchronize(self) -> Result[None]:
         try:
             self.repo.update_index()
@@ -22,15 +30,12 @@ class Blog:
         except Exception as e:
             return Result.fail(e)
 
-    def create(self, item: Item, formatter: Formatter) -> Result[None]:
+    def create(self, item: Item, formatter: Formatter) -> Result[Item]:
         try:
-            # name must be unique globally
-            items = self.repo.posts + self.repo.drafts
-            exist_item = next((i for i in items if i.name == item.name), None)
-            if exist_item:
+            if item in self:
                 raise ValueError(f"Item {item.name} already exists")
-            self.repo.add(item, formatter)
-            return Result.ok()
+            item = self.repo.add(item, formatter)
+            return Result.ok(item)
         except Exception as e:
             return Result.fail(e)
 
@@ -101,3 +106,11 @@ class Blog:
             return Result.ok()
         except Exception as e:
             return Result.fail(e)
+
+    def __contains__(self, item: Item) -> bool:
+        if not isinstance(item, Item):
+            return False
+        # name must be unique globally
+        items = self.repo.posts + self.repo.drafts
+        exist_item = next((i for i in items if i.name == item.name), None)
+        return exist_item is not None

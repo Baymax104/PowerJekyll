@@ -13,7 +13,7 @@ from core.utils import assert_item_exists
 
 class DirectoryDao(BaseDao):
 
-    def add(self, item: Item, formatter: Formatter):
+    def add(self, item: Item, formatter: Formatter) -> Item:
         sub_dir = "_posts" if item.type == ItemType.Post else "_drafts"
         item_abs_path = self.root / sub_dir / item.name
         assets_abs_path = item_abs_path / "assets"
@@ -33,6 +33,7 @@ class DirectoryDao(BaseDao):
         yaml = YAML(typ="string")
         content = f"---\n{yaml.dump_to_string(formatter.model_dump())}\n---\n"
         md_abs_path.write_text(content, encoding="utf-8")
+        return item
 
 
     def open(self, item: Item, editor: str | None = None):

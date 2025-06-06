@@ -4,7 +4,7 @@ from pathlib import Path
 from core.models import BlogItems, Formatter, Item
 from core.repository.directory_dao import DirectoryDao
 from core.repository.file_dao import FileDao
-from core.repository.items import get_from_index, get_from_root
+from core.repository.items import get_from_root, get_items
 from settings import Mode
 
 
@@ -27,16 +27,10 @@ class BlogRepository:
         content = items.model_dump_json(indent=2)
         index_file.write_text(content, encoding="utf-8")
 
-    def __get_items(self) -> BlogItems | None:
-        try:
-            if self.__items is None:
-                index_file = Path().home() / ".jekyll-cli" / f"index-{self.mode}.json"
-                if not index_file.is_file():
-                    self.update_index()
-                self.__items = get_from_index(self.mode)
-            return self.__items
-        except Exception:
-            return None
+    def __get_items(self) -> BlogItems:
+        if self.__items is None:
+            self.__items = get_items(self.root, self.mode)
+        return self.__items
 
     @property
     def posts(self) -> list[Item]:
@@ -46,9 +40,10 @@ class BlogRepository:
     def drafts(self) -> list[Item]:
         return list(self.__get_items().drafts)
 
-    def add(self, item: Item, formatter: Formatter):
-        self.dao.add(item, formatter)
+    def add(self, item: Item, formatter: Formatter) -> Item:
+        item = self.dao.add(item, formatter)
         self.update_index()
+        return item
 
     def remove(self, item: Item):
         self.dao.remove(item)

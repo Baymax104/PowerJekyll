@@ -13,7 +13,7 @@ from core.utils import assert_item_exists
 
 class FileDao(BaseDao):
 
-    def add(self, item: Item, formatter: Formatter):
+    def add(self, item: Item, formatter: Formatter) -> Item:
         md_filename = f"{item.name}.md"
         if item.type == ItemType.Post:
             md_filename = f"{time.strftime('%Y-%m-%d')}-{md_filename}"
@@ -28,6 +28,7 @@ class FileDao(BaseDao):
         yaml = YAML(typ="string")
         content = f"---\n{yaml.dump_to_string(formatter.model_dump())}\n---\n"
         item_abs_path.write_text(content, encoding="utf-8")
+        return item
 
 
     def open(self, item: Item, editor: str | None = None):
