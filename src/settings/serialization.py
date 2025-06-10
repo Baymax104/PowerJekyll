@@ -22,6 +22,6 @@ def get_settings() -> AppSettings:
         return app_settings
     else:
         with settings_file.open("r", encoding="utf-8") as f:
-            app_settings = tomlkit.load(f)
+            app_settings = tomlkit.load(f).unwrap()
             app_settings = AppSettings.model_validate(app_settings)
             return app_settings

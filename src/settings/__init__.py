@@ -1,6 +1,6 @@
 # -*- coding: UTF-8 -*-
 from settings.models import *
-from settings.setting import *
+from settings.serialization import *
 
 __all__ = [
     "Mode",

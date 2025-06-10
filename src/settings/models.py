@@ -2,7 +2,7 @@
 from enum import StrEnum
 from pathlib import Path
 
-from pydantic import BaseModel
+from pydantic import BaseModel, field_serializer
 
 
 class Mode(StrEnum):
@@ -20,3 +20,7 @@ class AppSettings(BaseModel):
     mode: Mode
     generate: GenerateSettings = GenerateSettings()
     editor: str | None = None
+
+    @field_serializer("root")
+    def serialize_root(self, root: Path | None, _info):
+        return str(root) if root else None
