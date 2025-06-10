@@ -1,17 +1,18 @@
 # -*- coding: UTF-8 -*-
 import os
 import subprocess
+import sys
 from typing import Annotated
 
+from cli.config_commands import app as config_app
 from typer import Argument, Context, Option, Typer
 
 import cli.prompt as pmt
+from cli.utils import complete_items
 from core import Blog
 from core.models import Formatter, Item, ItemType
 from core.repository import get_items
 from settings import AppSettings, get_settings, update_settings
-from .config_commands import app as config_app
-from .utils import complete_items
 
 
 app = Typer(
@@ -21,13 +22,17 @@ app = Typer(
 
 app.add_typer(config_app, rich_help_panel="Configuration")
 
-app_settings: AppSettings = get_settings()
-items = get_items(app_settings.root, app_settings.mode)
+try:
+    app_settings: AppSettings = get_settings()
+    items = get_items(app_settings.root, app_settings.mode)
+except Exception as e:
+    pmt.error(f"Error: {e}")
+    sys.exit(1)
 
 
 @app.callback()
-def check_typer(context: Context):
-    if context.invoked_subcommand != "init" and app_settings.root is None:
+def before(context: Context):
+    if context.invoked_subcommand not in ["init", "config"] and app_settings.root is None:
         pmt.error_exit(f"No blog root. Use \"blog init\" to initialize the blog.")
 
 
@@ -265,6 +270,7 @@ def rename(
 
 @app.command(rich_help_panel="Configuration")
 def sync():
+    """Synchronize article index from <root>."""
     blog = Blog(app_settings.root, app_settings.mode)
     result = blog.synchronize()
     if not result.success:

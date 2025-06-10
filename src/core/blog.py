@@ -52,7 +52,7 @@ class Blog:
 
     def open(self, item: Item, editor: str | None = None) -> Result[None]:
         try:
-            command = ["cmd.exe", "/c", "start", editor if editor else "", item.md_path]
+            command = ["cmd.exe", "/c", "start", editor if editor else "", self.root / item.md_path]
             subprocess.run(command)
             return Result.ok()
         except Exception as e:
