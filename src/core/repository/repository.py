@@ -1,5 +1,6 @@
 # -*- coding: UTF-8 -*-
 from pathlib import Path
+from typing import Literal
 
 from core.models import BlogItems, Formatter, Item
 from core.repository.directory_dao import DirectoryDao
@@ -53,10 +54,6 @@ class BlogRepository:
         self.dao.rename(item, new_name)
         self.update_index()
 
-    def publish(self, item: Item):
-        self.dao.publish(item)
-        self.update_index()
-
-    def unpublish(self, item: Item):
-        self.dao.unpublish(item)
+    def move(self, item: Item, sub_dir: Literal["_posts", "_drafts"]):
+        self.dao.move(item, sub_dir)
         self.update_index()

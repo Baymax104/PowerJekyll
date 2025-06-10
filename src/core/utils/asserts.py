@@ -4,10 +4,10 @@ from pathlib import Path
 from core.models import Item
 
 
-def assert_item_exists(item: Item):
-    if item.path is None or not item.path.exists():
+def assert_item_exists(root: Path, item: Item):
+    if item.path is None or not (root / item.path).exists():
         raise ValueError('Item path is null.')
-    if item.md_path is None or not item.md_path.exists():
+    if item.md_path is None or not (root / item.md_path).exists():
         raise ValueError('File path is null.')
 
 

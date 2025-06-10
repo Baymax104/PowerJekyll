@@ -3,7 +3,7 @@ import subprocess
 from pathlib import Path
 from typing import Literal
 
-from core.models import Formatter, Item, Result
+from core.models import Formatter, Item, ItemType, Result
 from core.repository import BlogRepository
 from settings import Mode
 
@@ -91,7 +91,9 @@ class Blog:
             item = next((i for i in items if i.name == name), None)
             if item is None:
                 raise ValueError(f"Item {name} not found")
-            self.repo.publish(item)
+            if item.type == ItemType.Post:
+                raise ValueError(f"Post {item} could not be published")
+            self.repo.move(item, "_posts")
             return Result.ok()
         except Exception as e:
             return Result.fail(e)
@@ -102,7 +104,9 @@ class Blog:
             item = next((i for i in items if i.name == name), None)
             if item is None:
                 raise ValueError(f"Item {name} not found")
-            self.repo.unpublish(item)
+            if item.type == ItemType.Draft:
+                raise ValueError(f"Draft {item} could not be unpublished")
+            self.repo.move(item, "_drafts")
             return Result.ok()
         except Exception as e:
             return Result.fail(e)

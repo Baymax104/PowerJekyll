@@ -3,6 +3,7 @@ import re
 import shutil
 import subprocess
 import time
+from typing import Literal
 
 from ruamel.yaml import YAML
 
@@ -37,26 +38,26 @@ class DirectoryDao(BaseDao):
 
 
     def open(self, item: Item, editor: str | None = None):
-        assert_item_exists(item)
+        assert_item_exists(self.root, item)
         command = ["cmd.exe", "/c", "start", editor if editor else "", item.md_path]
         subprocess.run(command)
 
 
     def remove(self, item: Item):
-        assert_item_exists(item)
-        shutil.rmtree(item.path)
+        assert_item_exists(self.root, item)
+        shutil.rmtree(self.root / item.path)
 
 
     def rename(self, item: Item, new_name: str):
-        assert_item_exists(item)
+        assert_item_exists(self.root, item)
 
-        pattern = re.compile(r"(\d{4}-\d{2}-\d{2})-(.+)")
-        if item.type == ItemType.Post and (match := pattern.match(item.md_path.stem)):
-            new_stem = f"{match.group(1)}-{new_name}"
+        md_pattern = re.compile(r"(\d{4}-\d{2}-\d{2})-(.+)\.md")
+        if item.type == ItemType.Post and (match := md_pattern.match(item.md_path.name)):
+            new_filename = f"{match.group(1)}-{new_name}.md"
         else:
-            new_stem = new_name
+            new_filename = f"{new_name}.md"
 
-        md_abs_path = self.root / item.md_path.with_stem(new_stem)
+        md_abs_path = self.root / item.md_path.with_name(new_filename)
         item_abs_path = self.root / item.path.with_name(new_name)
 
         if item_abs_path.exists():
@@ -65,22 +66,17 @@ class DirectoryDao(BaseDao):
         (self.root / item.md_path).rename(md_abs_path)
         (self.root / item.path).rename(item_abs_path)
 
-
-    def publish(self, item: Item):
-        assert_item_exists(item)
-        if item.type == ItemType.Post:
-            raise ValueError("Cannot publish Post")
-
-        dest_parent_abs_path = self.root / "_posts"
+    def move(self, item: Item, target_dir: Literal["_posts", "_drafts"]):
+        assert_item_exists(self.root, item)
+        dest_parent_abs_path = self.root / target_dir
         dest_item_abs_path = dest_parent_abs_path / item.path.relative_to(item.parent)
+        dest_md_abs_path = dest_parent_abs_path / item.md_path.relative_to(item.parent)
         shutil.move(self.root / item.path, dest_item_abs_path)
 
-
-    def unpublish(self, item: Item):
-        assert_item_exists(item)
-        if item.type == ItemType.Draft:
-            raise ValueError("Cannot unpublish Draft")
-
-        dest_parent_abs_path = self.root / "_drafts"
-        dest_item_abs_path = dest_parent_abs_path / item.path.relative_to(item.parent)
-        shutil.move(self.root / item.path, dest_item_abs_path)
+        if target_dir == "_posts":
+            new_filename = f"{time.strftime('%Y-%m-%d')}-{item.name}.md"
+        elif target_dir == "_drafts":
+            new_filename = f"{item.name}.md"
+        else:
+            raise NotImplementedError
+        dest_md_abs_path.rename(dest_md_abs_path.with_name(new_filename))

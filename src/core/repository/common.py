@@ -1,6 +1,7 @@
 # -*- coding: UTF-8 -*-
 from abc import ABC, abstractmethod
 from pathlib import Path
+from typing import Literal
 
 from pydantic import BaseModel
 
@@ -23,14 +24,8 @@ class DaoOperation(ABC):
     def rename(self, item: Item, new_name: str):
         ...
 
-
     @abstractmethod
-    def publish(self, item: Item):
-        ...
-
-
-    @abstractmethod
-    def unpublish(self, item: Item):
+    def move(self, item: Item, sub_dir: Literal["_posts", "_drafts"]):
         ...
 
 

@@ -15,7 +15,7 @@ class Formatter(BaseModel):
     model_config = ConfigDict(extra="allow")
 
     layout: Annotated[str, Field(frozen=True)] = "post"
-    title: str = ""
+    title: str | None = None
     categories: list[str] = []
     tags: list[str] = []
 
@@ -38,6 +38,9 @@ class Item(BaseModel):
             "path": str(self.path),
             "markdown path": str(self.md_path),
         }
+
+    def __str__(self):
+        return self.name
 
 
 class BlogItems(BaseModel):
