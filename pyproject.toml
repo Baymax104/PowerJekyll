@@ -23,7 +23,7 @@ dev = [
 ]
 
 [project.scripts]
-blog = "cli:app"
+blog = "main:main"
 
 [build-system]
 requires = ["hatchling"]

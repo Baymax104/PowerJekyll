@@ -1,20 +1,38 @@
 # -*- coding: UTF-8 -*-
 from pathlib import Path
-from typing import List, Any, Dict
+from typing import Any, Dict, Literal
 
+import typer
 from InquirerPy import inquirer
 from InquirerPy.base.control import Choice
 from prompt_toolkit.document import Document
-from prompt_toolkit.validation import Validator, ValidationError
+from prompt_toolkit.validation import ValidationError, Validator
 from rich.console import Console
 from rich.table import Table
 
+
 __console = Console()
 print = __console.print
-rule = __console.rule
 
 
-def print_table(items: List[Any], **table_config):
+def success(message: str):
+    print(f"[green]{message}[/green]")
+
+
+def error(message: str):
+    print(f"[red]{message}[/red]")
+
+
+def info(rich_text: str):
+    print(rich_text)
+
+
+def error_exit(message: str):
+    error(message)
+    raise typer.Exit(code=1)
+
+
+def print_list(items: list[Any], **table_config):
     if not items:
         return
     table = Table(**table_config)
@@ -33,16 +51,16 @@ def print_table(items: List[Any], **table_config):
     print(table)
 
 
-def print_info(info: Dict[str, Any], **table_config):
+def print_dict(d: dict[str, Any], **table_config):
     table = Table(**table_config)
     table.add_column()
     table.add_column()
-    for key, value in info.items():
+    for key, value in d.items():
         table.add_row(f'[bold green]{key.capitalize()}', str(value))
     print(table)
 
 
-def print_config(config: Dict[str, Any], prefix=''):
+def print_config(config: dict[str, Any], prefix=''):
     for key, value in config.items():
         key = f'{prefix}.{key}' if prefix else key
         if isinstance(value, Dict):
@@ -51,14 +69,13 @@ def print_config(config: Dict[str, Any], prefix=''):
             print(f'{key} = {value}')
 
 
-def select(message, choices: List[Any] | Dict[str, Any]) -> Any:
-    match choices:
-        case list():
-            select_choices = choices
-        case dict():
-            select_choices = [Choice(name=name, value=value) for name, value in choices.items()]
-        case _:
-            raise ValueError('choices is not a list or dict.')
+def select(message: str, choices: list[Any] | dict[str, Any]) -> Any:
+    if isinstance(choices, list):
+        select_choices = choices
+    elif isinstance(choices, dict):
+        select_choices = [Choice(name=name, value=value) for name, value in choices.items()]
+    else:
+        raise ValueError('choices is not a list or dict.')
     return inquirer.select(
         message=message,
         choices=select_choices,
@@ -66,14 +83,13 @@ def select(message, choices: List[Any] | Dict[str, Any]) -> Any:
     ).execute()
 
 
-def check(message, choices: List[Any] | Dict[str, Any]) -> Any:
-    match choices:
-        case list():
-            select_choices = choices
-        case dict():
-            select_choices = [Choice(name=name, value=value) for name, value in choices.items()]
-        case _:
-            raise ValueError('choices is not a list or dict.')
+def check(message: str, choices: list[Any] | dict[str, Any]) -> Any:
+    if isinstance(choices, list):
+        select_choices = choices
+    elif isinstance(choices, dict):
+        select_choices = [Choice(name=name, value=value) for name, value in choices.items()]
+    else:
+        raise ValueError('choices is not a list or dict.')
     return inquirer.checkbox(
         message=message,
         choices=select_choices,
@@ -106,12 +122,19 @@ class PathValidator(Validator):
             )
 
 
-def input_directory_path(message) -> str:
+def input_path(message: str, path_type: Literal["file", "directory"]) -> Path:
+    only_files = (path_type == "file")
+    only_directories = (path_type == "directory")
     return inquirer.filepath(
         message=message,
         vi_mode=True,
-        only_directories=True,
+        only_files=only_files,
+        only_directories=only_directories,
         multicolumn_complete=True,
         validate=PathValidator(),
-        filter=lambda path: str(Path(path).resolve())
+        filter=lambda path: Path(path).resolve()
     ).execute()
+
+
+def input_text(message) -> str:
+    return inquirer.text(message=message, vi_mode=True).execute()
