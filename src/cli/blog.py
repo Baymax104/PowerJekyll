@@ -243,7 +243,7 @@ def init():
     summary = {
         "Blog root path": str(root),
         "Management mode": mode,
-        "Editor": editor,
+        "Editor": editor if editor else "null",
         # "Generate deploy configuration": deploy
     }
     pmt.print_dict(summary, show_header=False)

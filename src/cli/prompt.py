@@ -12,19 +12,18 @@ from rich.table import Table
 
 
 __console = Console()
-print = __console.print
 
 
 def success(message: str):
-    print(f"[green]{message}[/green]")
+    __console.print(f"[green]{message}[/green]")
 
 
 def error(message: str):
-    print(f"[red]{message}[/red]")
+    __console.print(f"[red]{message}[/red]")
 
 
 def info(rich_text: str):
-    print(rich_text)
+    __console.print(rich_text)
 
 
 def error_exit(message: str):
@@ -40,7 +39,7 @@ def print_list(items: list[Any], **table_config):
 
     if len(items) == 1:
         table.add_row(f"[green][1][/] {items[0]}")
-        print(table)
+        __console.print(table)
         return
 
     table.add_column()
@@ -48,7 +47,7 @@ def print_list(items: list[Any], **table_config):
         item1 = f"[green][{i + 1}][/] {items[i]}"
         item2 = f"[green][{i + 2}][/] {items[i + 1]}" if i + 1 < len(items) else ""
         table.add_row(item1, item2)
-    print(table)
+    __console.print(table)
 
 
 def print_dict(d: dict[str, Any], **table_config):
@@ -57,7 +56,7 @@ def print_dict(d: dict[str, Any], **table_config):
     table.add_column()
     for key, value in d.items():
         table.add_row(f"[cyan]{key.capitalize()}", str(value))
-    print(table)
+    __console.print(table)
 
 
 def select(message: str, choices: list[Any] | dict[str, Any]) -> Any:

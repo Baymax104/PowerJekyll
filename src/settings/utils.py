@@ -45,6 +45,5 @@ def set_settings_by_path(s: AppSettings, path: str, value: Any) -> AppSettings:
     # target node processing
     if keys[-1] not in current:
         raise AttributeError(f"Missing \"{keys[-1]}\"")
-
     current[keys[-1]] = value
     return AppSettings.model_validate(d)
