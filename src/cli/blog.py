@@ -7,6 +7,7 @@ from typing import Annotated
 from typer import Argument, Context, Option, Typer
 
 import cli.prompt as pmt
+from __version__ import __version__
 from cli.config import app as config_app
 from cli.utils import complete_items
 from core import Blog
@@ -18,7 +19,8 @@ from settings import AppSettings, get_settings, update_settings
 app = Typer(
     name="blog",
     help="Jekyll Blog CLI Tool.",
-    rich_markup_mode="rich"
+    rich_markup_mode="rich",
+    invoke_without_command=True,
 )
 
 app.add_typer(config_app, rich_help_panel="Configuration")
@@ -32,7 +34,13 @@ except Exception as e:
 
 
 @app.callback()
-def before(context: Context):
+def before(
+    context: Context,
+    version: Annotated[bool, Option("--version", help="Print version and exit.")] = None
+):
+    if context.invoked_subcommand is None and version:
+        pmt.info(f"Jekyll CLI Version: {__version__}")
+        return
     if context.invoked_subcommand not in ["init", "config"] and app_settings.root is None:
         pmt.error_exit(f"No blog root. Use \"blog init\" to initialize the blog.")
 

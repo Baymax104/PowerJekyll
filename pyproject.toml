@@ -31,7 +31,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [tool.hatch]
-version = { path = "src/__init__.py" }
+version = { path = "src/__version__.py" }
 build.targets.wheel.packages = [
     "src/blog",
     "src/cli",
