@@ -16,6 +16,7 @@ from settings import AppSettings, get_settings, update_settings
 
 
 app = Typer(
+    name="blog",
     help="Jekyll Blog CLI Tool.",
     rich_markup_mode="rich"
 )
@@ -281,7 +282,7 @@ def sync():
     result = blog.synchronize()
     if not result.success:
         pmt.error_exit(f"Error: {result}")
-    pmt.success("Sync successfully.")
+    pmt.success("Synchronize index successfully.")
 
 
 # @app.command(rich_help_panel="Generation")
