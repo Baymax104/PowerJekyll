@@ -1,6 +1,6 @@
 # -*- coding: UTF-8 -*-
 from pathlib import Path
-from typing import Any, Dict, Literal
+from typing import Any, Literal
 
 import typer
 from InquirerPy import inquirer
@@ -56,17 +56,8 @@ def print_dict(d: dict[str, Any], **table_config):
     table.add_column()
     table.add_column()
     for key, value in d.items():
-        table.add_row(f'[bold green]{key.capitalize()}', str(value))
+        table.add_row(f"[cyan]{key.capitalize()}", str(value))
     print(table)
-
-
-def print_config(config: dict[str, Any], prefix=''):
-    for key, value in config.items():
-        key = f'{prefix}.{key}' if prefix else key
-        if isinstance(value, Dict):
-            print_config(value, key)
-        else:
-            print(f'{key} = {value}')
 
 
 def select(message: str, choices: list[Any] | dict[str, Any]) -> Any:
@@ -75,7 +66,7 @@ def select(message: str, choices: list[Any] | dict[str, Any]) -> Any:
     elif isinstance(choices, dict):
         select_choices = [Choice(name=name, value=value) for name, value in choices.items()]
     else:
-        raise ValueError('choices is not a list or dict.')
+        raise ValueError("choices is not a list or dict.")
     return inquirer.select(
         message=message,
         choices=select_choices,
@@ -89,7 +80,7 @@ def check(message: str, choices: list[Any] | dict[str, Any]) -> Any:
     elif isinstance(choices, dict):
         select_choices = [Choice(name=name, value=value) for name, value in choices.items()]
     else:
-        raise ValueError('choices is not a list or dict.')
+        raise ValueError("choices is not a list or dict.")
     return inquirer.checkbox(
         message=message,
         choices=select_choices,
@@ -101,23 +92,30 @@ def confirm(message, default=False) -> bool:
     return inquirer.confirm(message, default=default).execute()
 
 
-class PathValidator(Validator):
+class __PathValidator(Validator):
 
-    def validate(self, document: Document) -> None:
-        if not len(document.text) > 0:
+    def validate(self, document: Document):
+        if len(document.text) == 0:
             raise ValidationError(
-                message='Input cannot be empty',
+                message="Input cannot be empty",
                 cursor_position=document.cursor_position,
             )
-        path = Path(document.text).expanduser()
+        path = Path(document.text).expanduser().resolve()
         if not path.is_dir():
             raise ValidationError(
-                message='Input is not a valid path',
+                message="Input is not a valid directory",
                 cursor_position=document.cursor_position,
             )
-        elif not path.exists():
+        post_dir = path / "_posts"
+        if not post_dir.is_dir():
             raise ValidationError(
-                message='Input is not a valid path',
+                message="Posts directory does not exist in this directory",
+                cursor_position=document.cursor_position,
+            )
+        draft_dir = path / "_drafts"
+        if not draft_dir.is_dir():
+            raise ValidationError(
+                message="Draft directory does not exist in this directory",
                 cursor_position=document.cursor_position,
             )
 
@@ -131,10 +129,10 @@ def input_path(message: str, path_type: Literal["file", "directory"]) -> Path:
         only_files=only_files,
         only_directories=only_directories,
         multicolumn_complete=True,
-        validate=PathValidator(),
+        validate=__PathValidator(),
         filter=lambda path: Path(path).resolve()
     ).execute()
 
 
-def input_text(message) -> str:
+def input_text(message: str) -> str:
     return inquirer.text(message=message, vi_mode=True).execute()
