@@ -1,5 +1,6 @@
 # -*- coding: UTF-8 -*-
 from pathlib import Path
+from typing import Any
 
 import tomlkit
 
@@ -25,3 +26,25 @@ def get_settings() -> AppSettings:
             app_settings = tomlkit.load(f).unwrap()
             app_settings = AppSettings.model_validate(app_settings)
             return app_settings
+
+
+def set_settings_by_path(s: AppSettings, path: str, value: Any) -> AppSettings:
+    d = s.model_dump()
+    keys = path.split(".")
+    current = d
+
+    # get target key
+    # intermediate node type must be BaseModel
+    for key in keys[:-1]:
+        if not isinstance(current, dict):
+            raise TypeError(f"Intermediate node type {type(current)} is not a dict")
+        if key not in current:
+            raise AttributeError(f"Missing \"{key}\"")
+        current = current[key]
+
+    # target node processing
+    if keys[-1] not in current:
+        raise AttributeError(f"Missing \"{keys[-1]}\"")
+
+    current[keys[-1]] = value
+    return AppSettings.model_validate(d)
