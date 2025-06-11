@@ -4,6 +4,7 @@ import subprocess
 import sys
 from typing import Annotated
 
+import typer
 from typer import Argument, Context, Option, Typer
 
 import cli.prompt as pmt
@@ -38,9 +39,13 @@ def before(
     context: Context,
     version: Annotated[bool, Option("--version", help="Print version and exit.")] = None
 ):
-    if context.invoked_subcommand is None and version:
-        pmt.info(f"Jekyll CLI Version: {__version__}")
-        return
+    if context.invoked_subcommand is None:
+        if version:
+            pmt.info(f"Jekyll CLI Version: {__version__}")
+        else:
+            typer.echo(context.get_help())
+        raise typer.Exit()
+
     if context.invoked_subcommand not in ["init", "config"] and app_settings.root is None:
         pmt.error_exit(f"No blog root. Use \"blog init\" to initialize the blog.")
 
