@@ -4,10 +4,10 @@ import subprocess
 import sys
 from typing import Annotated
 
-from cli.config_commands import app as config_app
 from typer import Argument, Context, Option, Typer
 
 import cli.prompt as pmt
+from cli.config import app as config_app
 from cli.utils import complete_items
 from core import Blog
 from core.models import Formatter, Item, ItemType
@@ -42,14 +42,17 @@ def serve(
     port: Annotated[int, Option(help="Listen on the given port.")] = app_settings.generate.port
 ):
     """Start blog server locally through jekyll."""
-    os.chdir(app_settings.root)
     command = ["bundle", "exec", "jekyll", "serve"]
     # draft option
     if draft:
         command.append("--drafts")
     if port is not None:
         command.extend(["--port", str(port)])
-    subprocess.run(command, shell=True)
+    try:
+        os.chdir(app_settings.root)
+        subprocess.run(command, shell=True)
+    except Exception as e:
+        pmt.error_exit(f"Error: {e}")
 
 
 @app.command(rich_help_panel="Generation")
@@ -57,11 +60,14 @@ def build(
     draft: Annotated[bool, Option(help="Build including drafts.")] = app_settings.generate.draft
 ):
     """Build jekyll site."""
-    os.chdir(app_settings.root)
     command = ["bundle", "exec", "jekyll", "build"]
     if draft:
         command.append("--drafts")
-    subprocess.run(command, shell=True)
+    try:
+        os.chdir(app_settings.root)
+        subprocess.run(command, shell=True)
+    except Exception as e:
+        pmt.error_exit(f"Error: {e}")
 
 
 @app.command(rich_help_panel="Operation")
