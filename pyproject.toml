@@ -32,7 +32,9 @@ build-backend = "hatchling.build"
 
 [tool.hatch]
 version = { path = "src/__version__.py" }
-build.targets.wheel.packages = [
+
+[tool.hatch.build.targets.wheel]
+packages = [
     "src/blog",
     "src/cli",
     "src/settings"
