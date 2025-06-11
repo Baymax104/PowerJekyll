@@ -250,7 +250,6 @@ def init():
         "directory (A directory containing a markdown file and an assets directory denotes a blog item.)": "directory"
     }
     mode = pmt.select(message="Please choose the management mode (file or directory):", choices=mode_choices)
-    # deploy = pmt.confirm("Generate deploy configuration file \"jekyll-deploy.yml\"?", default=True)
     editor = pmt.input_text("Please enter your editor:")
 
     pmt.info("You have entered the following configurations:")
@@ -258,7 +257,6 @@ def init():
         "Blog root path": str(root),
         "Management mode": mode,
         "Editor": editor if editor else "null",
-        # "Generate deploy configuration": deploy
     }
     pmt.print_dict(summary, show_header=False)
 
@@ -296,29 +294,3 @@ def sync():
     if not result.success:
         pmt.error_exit(f"Error: {result}")
     pmt.success("Synchronize index successfully.")
-
-
-# @app.command(rich_help_panel="Generation")
-# def deploy():
-#     """Deploy the site with the '<root>/jekyll-deploy.yml.'"""
-#     steps = Config.select("steps", prefix="deploy")
-#     if steps is None:
-#         print("[red]No deploy steps found.")
-#         return
-#
-#     os.chdir(Config.root)
-#     for step in steps:
-#         command = step.get("command")
-#         if not command:
-#             continue
-#         name = step.get("name", command)
-#         result = subprocess.run(command, shell=True, capture_output=True)
-#         if result.returncode == 0:
-#             print(f"[green]Run \"{name}\" successfully.")
-#             if result.stdout:
-#                 print(decode_stdout(result.stdout))
-#         else:
-#             print(f"[red]Run \"{name}\" failed, the details are shown below:")
-#             print(f"[red]{decode_stdout(result.stdout)}")
-#             print(f"[red]{decode_stdout(result.stderr)}")
-#             break

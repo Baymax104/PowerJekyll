@@ -16,10 +16,3 @@ def complete_items(candidates: List[Any]) -> Callable[[str], List[str]]:
         return [str(candidate) for candidate in candidates if str(candidate).startswith(incomplete)]
 
     return complete
-
-
-def decode_stdout(output):
-    try:
-        return output.decode('utf-8')
-    except UnicodeDecodeError:
-        return output.decode('gbk')
