@@ -24,7 +24,7 @@ dev = [
 ]
 
 [project.scripts]
-blog = "main:app"
+blog = "cli:app"
 
 [build-system]
 requires = ["hatchling"]
@@ -35,7 +35,8 @@ version = { path = "src/__version__.py" }
 
 [tool.hatch.build.targets.wheel]
 packages = [
-    "src/blog",
+    "src/core",
     "src/cli",
-    "src/settings"
+    "src/settings",
+    "src/__version__.py"
 ]
